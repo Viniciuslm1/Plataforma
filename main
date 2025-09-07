@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Simulador de Operação Binária</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <h1>Simulador Binário — Modo Prática</h1>
+      <span class="tag">DEMO</span>
+    </div>
+    <div class="status">
+      <span class="tag">TZ: America/São_Paulo</span>
+      <span class="balance">Saldo: R$ <span id="balance">0,00</span></span>
+      <button class="btn" id="btnDeposit">Depositar (fictício)</button>
+    </div>
+  </div>
+
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="head">
+        <input id="search" class="search" placeholder="Pesquisar ativos (ex.: BTC, EURUSD)" />
+      </div>
+      <div class="asset-list" id="assetList"></div>
+    </aside>
+
+    <main class="center">
+      <div class="toolbar">
+        <div id="symbolBox" class="tag">BTCUSDT (Binance)</div>
+        <div style="margin-left:8px" class="muted">Timeframe:</div>
+        <div class="chip active" data-tf="1">M1</div>
+        <div class="chip" data-tf="5">M5</div>
+        <div class="chip" data-tf="15">M15</div>
+        <div style="margin-left:12px" class="muted">Fonte:</div>
+        <select id="source" class="chip">
+          <option value="binance" selected>Binance (WS)</option>
+          <option value="sim">Simulado</option>
+        </select>
+        <div style="margin-left:auto" class="muted">Hotkeys: ↑ CALL, ↓ PUT, A/D tempo, +/- valor</div>
+      </div>
+      <div id="tradingview-chart-container" style="width:100%; height:60vh; min-height:380px;"></div>
+      <div class="price-tape">
+        <div>Preço: <strong id="price">0.00000</strong></div>
+        <div>Compra até: <strong id="purchaseDeadline">--:--</strong> | Expira: <strong id="expiryClock">--:--</strong></div>
+      </div>
+    </main>
+
+    <aside class="ticket">
+      <div class="panel">
+        <h3>Parâmetros</h3>
+        <div class="row">
+          <div style="flex:1 1 120px">
+            <label>Ativo</label>
+            <select id="symbol">
+              <option value="btcusdt" selected>BTCUSDT (Binance)</option>
+              <option value="ethusdt">ETHUSDT (Binance)</option>
+              <option value="adausdt">ADAUSDT (Binance)</option>
+            </select>
+          </div>
+          <div style="flex:1 1 120px">
+            <label>Payout</label>
+            <select id="payout">
+              <option value="0.6">60%</option>
+              <option value="0.75">75%</option>
+              <option value="0.8" selected>80%</option>
+              <option value="0.9">90%</option>
+            </select>
+          </div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div style="flex:1 1 120px">
+            <label>Valor</label>
+            <input id="stake" type="number" min="1" step="1" value="20" />
+            <div class="amount-chips">
+              <span class="chip quick-amt" data-v="10">R$10</span>
+              <span class="chip quick-amt" data-v="20">R$20</span>
+              <span class="chip quick-amt" data-v="50">R$50</span>
+              <span class="chip quick-amt" data-v="100">R$100</span>
+            </div>
+          </div>
+          <div style="flex:1 1 120px">
+            <label>Expiração</label>
+            <select id="expiry">
+              <option value="30">30s (Turbo)</option>
+              <option value="60" selected>1m</option>
+              <option value="120">2m</option>
+              <option value="300">5m (Clássico)</option>
+            </select>
+            <div class="amount-chips">
+              <span class="chip quick-exp" data-v="30">30s</span>
+              <span class="chip quick-exp" data-v="60">1m</span>
+              <span class="chip quick-exp" data-v="120">2m</span>
+              <span class="chip quick-exp" data-v="300">5m</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Ação</h3>
+        <div class="big-actions">
+          <button class="btn call" id="btnCall">CALL (↑)</button>
+          <button class="btn put" id="btnPut">PUT (↓)</button>
+        </div>
+        <div style="margin-top:8px" class="muted">Retorno potencial: <span id="potential">R$0,00</span></div>
+      </div>
+
+      <div class="panel">
+        <h3>Configurações</h3>
+        <div class="row">
+          <div style="flex:1 1 120px">
+            <label><input type="checkbox" id="sound" checked> Som</label>
+          </div>
+          <div style="flex:1 1 120px">
+            <label><input type="checkbox" id="martingale"> Martingale após perda (+100%)</label>
+          </div>
+          <div style="flex:1 1 120px">
+            <label>Limite diário de perda</label>
+            <input id="dailyLoss" type="number" min="0" step="10" value="0" />
+          </div>
+        </div>
+      </div>
+
+      <div class="orders">
+        <h3>Posições</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>#</th><th>Tipo</th><th>Entrada</th><th>Expira</th><th>Strike</th><th>Preço</th><th>Status</th><th class="right">P&L</th><th></th>
+            </tr>
+          </thead>
+          <tbody id="ordersBody"></tbody>
+        </table>
+      </div>
+    </aside>
+  </div>
+  <footer style="padding:10px 16px;border-top:1px solid var(--border);color:#94a3b8;font-size:12px">
+    <strong>Aviso:</strong> Este é um simulador educacional, inspirado em layouts populares. Operações binárias envolvem <span class="warn">alto risco</span>. Não é recomendação de investimento.
+  </footer>
+  <script src="script.js"></script>
+</body>
+</html>
